@@ -39,7 +39,7 @@ def comprobar_archivos(archivo_base, carpeta):
         cumplen = 0
         for archivo in lista_archivos:
             archivo = carpeta + "/" + archivo # Corregir la ruta relativa
-            
+
             with open(archivo, "r") as file, open(archivo_base, "r") as base_file:
                 contenido = file.read()
                 contenido_base = base_file.read()
@@ -55,7 +55,7 @@ def comprobar_archivos(archivo_base, carpeta):
             
             if cumple_condicion:
                 cumplen += 1
-                num_ceros = contar_ceros_iniciales(archivo)
+                num_ceros = contar_ceros_iniciales(resumen_sha256)
 
                 print(f"Numero de ceros del Hash: {num_ceros}")
 
