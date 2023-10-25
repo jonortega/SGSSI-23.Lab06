@@ -1,5 +1,15 @@
 import hashlib
 import re
+import os
+
+
+def contar_ceros_iniciales(cadena):
+    # Encuentra una o más ocurrencias de '0' al comienzo de la cadena
+    match = re.match(r'^0+', cadena)
+    if match:
+        return len(match.group(0)) # Cantidad de ceros iniciales
+    else:
+        return 0
 
 def calcular_sha256(nombre_archivo):
     sha256 = hashlib.sha256()
@@ -15,30 +25,55 @@ def calcular_sha256(nombre_archivo):
     except FileNotFoundError:
         return None
 
-def comprobar_archivos(archivo1, archivo2):
+def comprobar_archivos(archivo_base, carpeta):
+    
+    if not os.path.exists(carpeta) or not os.path.isdir(carpeta):
+        raise ValueError(f"La carpeta {carpeta} no existe o no es un directorio válido.")
+    
+    # Listar todos los archivos en la carpeta
+    lista_archivos = os.listdir(carpeta)
+    mejor_candidato = lista_archivos[0]
+    num_ceros_max = 0
+
     try:
-        with open(archivo1, "r") as file1, open(archivo2, "r") as file2:
-            contenido1 = file1.read()
-            contenido2 = file2.read()
+        cumplen = 0
+        for archivo in lista_archivos:
+            archivo = carpeta + "/" + archivo # Corregir la ruta relativa
+            
+            with open(archivo, "r") as file, open(archivo_base, "r") as base_file:
+                contenido = file.read()
+                contenido_base = base_file.read()
 
-        resumen_sha256_1 = calcular_sha256(archivo1)
-        resumen_sha256_2 = calcular_sha256(archivo2)
+            resumen_sha256 = calcular_sha256(archivo)
+            resumen_sha256_base = calcular_sha256(archivo_base)
 
-        cumple_condicion = contenido2.startswith(contenido1) and \
-                           bool(re.search(r'[0-9a-f]{8}\tfe\t100$', contenido2)) and \
-                           bool(re.match(r'^0+', resumen_sha256_2))
+            cumple_condicion = contenido.startswith(contenido_base) and \
+                            bool(re.search(r'[0-9a-f]{8}\t[0-9a-f]{2}\t100$', contenido)) and \
+                            bool(re.match(r'^0+', resumen_sha256))
 
-        # print(f"({contenido2.startswith(contenido1)}, {bool(re.search(r'[0-9a-f]{8}\tfe\t100$', contenido2))}, {bool(re.match(r'^0+', resumen_sha256_2))})")
-        return cumple_condicion
+            print(f"Fichero {archivo} cumple condición: {cumple_condicion}")
+            
+            if cumple_condicion:
+                cumplen += 1
+                num_ceros = contar_ceros_iniciales(archivo)
+
+                print(f"Numero de ceros del Hash: {num_ceros}")
+
+                if num_ceros > num_ceros_max:
+                    num_ceros_max = num_ceros
+                    mejor_candidato = archivo
+        
+        return mejor_candidato
 
     except FileNotFoundError:
         print("Al menos uno de los archivos no se encontró.")
 
 if __name__ == "__main__":
-    archivo1 = input("Ingrese el nombre del primer archivo de texto: ")
-    archivo2 = input("Ingrese el nombre del segundo archivo de texto: ")
-    # archivo1 = "SGSSI-23.CB.02.txt"
-    # archivo2 = "Output.txt"
+    # archivo = input("Ingrese el nombre del archivo de texto: ")
+    # carpeta = input("Ingrese el nombre de la carpeta de candidatos: ")
+    archivo = "SGSSI-23.CB.03.txt"
+    carpeta = "SGSSI-23.S.6.2.CB.03.Candidatos"
 
-    resultado = comprobar_archivos(archivo1, archivo2)
-    print(f"Los ficheros cumplen las condiciones: {resultado}")
+    fichero_seleccionado = comprobar_archivos(archivo, carpeta)
+    # print(f"Relación: {relacion}")
+    print(f"Fichero seleccionado: {fichero_seleccionado}")
